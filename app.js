@@ -404,29 +404,119 @@ function renderList({ fromFilterChange = false } = {}) {
   }
 }
 
+function stripWrappedQuotes(value) {
+  if (value.length < 2) return value;
+  const first = value[0];
+  const last = value[value.length - 1];
+  if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+function splitBracketArrayItems(value) {
+  const items = [];
+  let current = '';
+  let quoteChar = null;
+
+  for (const char of value) {
+    if ((char === '"' || char === "'") && (!quoteChar || quoteChar === char)) {
+      quoteChar = quoteChar ? null : char;
+      current += char;
+      continue;
+    }
+
+    // Assumption: commas separate items only when not inside quotes.
+    if (char === ',' && !quoteChar) {
+      if (current.trim()) {
+        items.push(current.trim());
+      }
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) {
+    items.push(current.trim());
+  }
+
+  return items.map((item) => stripWrappedQuotes(item.trim())).filter(Boolean);
+}
+
+function parseFrontmatterValue(rawValue) {
+  const value = rawValue.trim();
+  if (!value) return '';
+
+  if (value.startsWith('[') && value.endsWith(']')) {
+    // Assumption: frontmatter arrays are flat (`[a, b]`) and do not contain nested arrays/objects.
+    const inside = value.slice(1, -1).trim();
+    if (!inside) return [];
+    return splitBracketArrayItems(inside);
+  }
+
+  return stripWrappedQuotes(value);
+}
+
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value.map((tag) => String(tag || '').trim()).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      return splitBracketArrayItems(trimmed.slice(1, -1));
+    }
+
+    return trimmed
+      .split(',')
+      .map((tag) => stripWrappedQuotes(tag.trim()))
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizeDisplayDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toISOString().slice(0, 10);
+}
+
 function parseFrontmatter(markdown) {
-  if (!markdown.startsWith('---\n')) {
+  try {
+    if (!markdown.startsWith('---\n')) {
+      return { attrs: {}, body: markdown };
+    }
+
+    const end = markdown.indexOf('\n---\n', 4);
+    if (end === -1) {
+      return { attrs: {}, body: markdown };
+    }
+
+    const raw = markdown.slice(4, end);
+    const body = markdown.slice(end + 5);
+    const attrs = {};
+
+    for (const line of raw.split('\n')) {
+      const idx = line.indexOf(':');
+      if (idx === -1) continue;
+      const key = line.slice(0, idx).trim();
+      if (!key) continue;
+      const rawValue = line.slice(idx + 1);
+      attrs[key] = parseFrontmatterValue(rawValue);
+    }
+
+    return { attrs, body };
+  } catch (_error) {
     return { attrs: {}, body: markdown };
   }
-
-  const end = markdown.indexOf('\n---\n', 4);
-  if (end === -1) {
-    return { attrs: {}, body: markdown };
-  }
-
-  const raw = markdown.slice(4, end);
-  const body = markdown.slice(end + 5);
-  const attrs = {};
-
-  for (const line of raw.split('\n')) {
-    const idx = line.indexOf(':');
-    if (idx === -1) continue;
-    const key = line.slice(0, idx).trim();
-    const value = line.slice(idx + 1).trim();
-    attrs[key] = value;
-  }
-
-  return { attrs, body };
 }
 
 async function viewPrompt(entry, options = {}) {
@@ -438,13 +528,18 @@ async function viewPrompt(entry, options = {}) {
 
     const markdown = await response.text();
     const parsed = parseFrontmatter(markdown);
+    const parsedTags = normalizeTags(parsed.attrs.tags);
+    const effectiveTags = parsedTags.length > 0 ? parsedTags : normalizeTags(entry.tags);
+    const normalizedUpdatedDate = normalizeDisplayDate(parsed.attrs.updated);
+    const normalizedCreatedDate = normalizeDisplayDate(parsed.attrs.created);
 
     elements.viewerTitle.textContent = entry.title || parsed.attrs.title || entry.path;
     elements.viewerMeta.textContent = [
       `Category: ${entry.category || 'Uncategorized'}`,
       `Path: ${entry.path}`,
-      parsed.attrs.updated ? `Updated: ${parsed.attrs.updated}` : null,
-      (entry.tags || []).length > 0 ? `Tags: ${entry.tags.join(', ')}` : null,
+      normalizedCreatedDate ? `Created: ${normalizedCreatedDate}` : null,
+      normalizedUpdatedDate ? `Updated: ${normalizedUpdatedDate}` : null,
+      effectiveTags.length > 0 ? `Tags: ${effectiveTags.join(', ')}` : null,
     ]
       .filter(Boolean)
       .join(' | ');
@@ -467,7 +562,7 @@ function enhanceIndex(indexEntries) {
   return indexEntries.map((entry) => ({
     ...entry,
     title: entry.title || entry.path.split('/').pop().replace(/\.md$/i, ''),
-    tags: entry.tags || [],
+    tags: normalizeTags(entry.tags),
     preview: entry.description || '',
   }));
 }

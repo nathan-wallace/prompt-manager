@@ -12,6 +12,7 @@ const state = {
   storageWarning: '',
   statusFlash: '',
   statusTimer: null,
+  copyFeedbackTimer: null,
 };
 
 const elements = {
@@ -715,6 +716,7 @@ function handleListKeyboardNavigation(event) {
 function copyViewerContent() {
   const text = elements.viewerContent.textContent || '';
   if (!text.trim()) {
+    flashCopyButtonState('idle');
     setTransientStatus('Nothing to copy yet.', 1800);
     return;
   }
@@ -722,11 +724,38 @@ function copyViewerContent() {
   navigator.clipboard
     .writeText(text)
     .then(() => {
+      flashCopyButtonState('copied');
       setTransientStatus('Prompt copied to clipboard.', 2000);
     })
     .catch(() => {
+      flashCopyButtonState('error');
       setTransientStatus('Unable to copy prompt. Check clipboard permissions.', 3000);
     });
+}
+
+function flashCopyButtonState(nextState) {
+  if (!elements.copyPrompt) return;
+  if (state.copyFeedbackTimer) {
+    clearTimeout(state.copyFeedbackTimer);
+    state.copyFeedbackTimer = null;
+  }
+
+  const labelMap = {
+    idle: 'Copy prompt',
+    copied: 'Copied!',
+    error: 'Copy failed',
+  };
+
+  elements.copyPrompt.dataset.copyState = nextState;
+  elements.copyPrompt.textContent = labelMap[nextState] || labelMap.idle;
+
+  if (nextState !== 'idle') {
+    state.copyFeedbackTimer = setTimeout(() => {
+      elements.copyPrompt.dataset.copyState = 'idle';
+      elements.copyPrompt.textContent = labelMap.idle;
+      state.copyFeedbackTimer = null;
+    }, 1400);
+  }
 }
 
 function addEventListeners() {
@@ -776,6 +805,7 @@ function addEventListeners() {
 
   elements.list.addEventListener('keydown', handleListKeyboardNavigation);
   elements.copyPrompt.addEventListener('click', copyViewerContent);
+  flashCopyButtonState('idle');
 }
 
 async function init() {

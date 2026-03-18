@@ -155,6 +155,43 @@ body {
   border-color: var(--active-ring);
 }
 
+#copy-prompt {
+  position: relative;
+}
+
+#copy-prompt[data-copy-state='copied'] {
+  border-color: color-mix(in srgb, #16a34a 70%, var(--border-soft));
+  background: color-mix(in srgb, #16a34a 15%, var(--surface-3));
+  color: color-mix(in srgb, #16a34a 75%, var(--text-primary));
+  box-shadow: 0 0 0 2px color-mix(in srgb, #16a34a 20%, transparent);
+}
+
+#copy-prompt[data-copy-state='error'] {
+  border-color: color-mix(in srgb, #dc2626 65%, var(--border-soft));
+  background: color-mix(in srgb, #dc2626 14%, var(--surface-3));
+  color: color-mix(in srgb, #dc2626 75%, var(--text-primary));
+  box-shadow: 0 0 0 2px color-mix(in srgb, #dc2626 16%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #copy-prompt[data-copy-state='copied'],
+  #copy-prompt[data-copy-state='error'] {
+    animation: copy-feedback-pop 220ms ease;
+  }
+}
+
+@keyframes copy-feedback-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .results-list {
   display: grid;
   gap: var(--space-md);

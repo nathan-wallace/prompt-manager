@@ -18,6 +18,12 @@ A lightweight repository for storing, organizing, and browsing reusable Markdown
 - `index.html`, `styles.css`, `app.js` — static GitHub Pages explorer.
 - `.nojekyll` — ensures GitHub Pages serves files/folders exactly as stored.
 
+## Explorer UX Notes
+
+- The filters now support both **Category** (folder-level grouping) and **Tag** (cross-category topics).
+- Category and tag dropdowns include per-option prompt counts so users can quickly understand coverage before filtering.
+- Filter selections are reflected in the URL query string (`search`, `category`, `tag`, `sort`, `favoritesOnly`) for shareable views.
+
 ## Prompt File Convention
 
 Each prompt should be a `.md` file under `prompts/`.
@@ -57,4 +63,3 @@ An agent can:
 ## Updating the Prompt Index
 
 When adding/removing prompt files, update `prompts/index.json` so the web explorer can discover files quickly.
-

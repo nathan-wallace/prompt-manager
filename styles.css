@@ -128,13 +128,17 @@ body {
 .toggle-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
-  padding: 0.35rem 0.65rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.42rem 0.75rem;
   color: var(--text-secondary);
   background: var(--surface-1);
   font-size: var(--font-size-meta);
+  line-height: 1.2;
   font-weight: 600;
   overflow: visible;
   transition: border-color 120ms ease, box-shadow 120ms ease;
@@ -145,10 +149,16 @@ body {
 }
 
 .action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 0.65rem;
   border: 1px solid var(--border-soft);
-  padding: 0.45rem 0.75rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem 0.82rem;
   font-size: 0.78rem;
+  line-height: 1.2;
   font-weight: 600;
   overflow: visible;
   transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
@@ -198,6 +208,21 @@ body {
   #copy-prompt[data-copy-state='copied'],
   #copy-prompt[data-copy-state='error'] {
     animation: copy-feedback-pop 220ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt-card,
+  .action-btn,
+  .favorite-btn,
+  input,
+  select,
+  textarea {
+    transition: none;
+  }
+
+  .prompt-card:hover {
+    transform: none;
   }
 }
 
@@ -314,12 +339,18 @@ body {
 }
 
 .favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   border-radius: 0.75rem;
   border: 1px solid var(--border-soft);
   background: var(--surface-1);
   color: var(--text-secondary);
+  min-width: 2rem;
+  min-height: 2rem;
   font-size: 0.72rem;
+  line-height: 1.2;
   font-weight: 600;
   padding: 0.4rem 0.58rem;
   overflow: visible;
@@ -397,6 +428,15 @@ body {
 
   .app-shell {
     gap: var(--space-md);
+  }
+
+  .utility-bar .toggle-chip,
+  .utility-bar .action-btn {
+    min-height: 1.75rem;
+  }
+
+  .utility-bar .action-btn {
+    padding-inline: 0.75rem;
   }
 }
 

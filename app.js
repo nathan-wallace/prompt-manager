@@ -17,12 +17,14 @@ const state = {
 const elements = {
   search: document.getElementById('search'),
   category: document.getElementById('category'),
+  tag: document.getElementById('tag'),
   sort: document.getElementById('sort'),
   showFavoritesOnly: document.getElementById('show-favorites-only'),
   clearFilters: document.getElementById('clear-filters'),
 
   quickSearch: document.getElementById('search-quick'),
   quickCategory: document.getElementById('category-quick'),
+  quickTag: document.getElementById('tag-quick'),
   quickFavoritesOnly: document.getElementById('show-favorites-only-quick'),
   quickClearFilters: document.getElementById('clear-filters-quick'),
 
@@ -45,22 +47,52 @@ async function loadIndex() {
   return response.json();
 }
 
-function fillCategoryFilter(prompts) {
-  const categories = [...new Set(prompts.map((item) => item.category).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+function toDisplayLabel(value) {
+  return String(value || '')
+    .split(/[-_]/g)
+    .filter(Boolean)
+    .map((token) => token[0].toUpperCase() + token.slice(1))
+    .join(' ');
+}
 
-  for (const category of categories) {
-    const primaryOption = document.createElement('option');
-    primaryOption.value = category;
-    primaryOption.textContent = category;
-    elements.category.append(primaryOption);
+function appendOption(selectElement, value, text) {
+  const option = document.createElement('option');
+  option.value = value;
+  option.textContent = text;
+  selectElement.append(option);
+}
 
+function fillFacetFilters(prompts) {
+  const categoryCounts = new Map();
+  const tagCounts = new Map();
+
+  for (const prompt of prompts) {
+    const normalizedCategory = normalizeCategory(prompt.category);
+    if (normalizedCategory) {
+      categoryCounts.set(normalizedCategory, (categoryCounts.get(normalizedCategory) || 0) + 1);
+    }
+
+    for (const tag of normalizeTags(prompt.tags)) {
+      const normalizedTag = normalizeCategory(tag);
+      if (!normalizedTag) continue;
+      tagCounts.set(normalizedTag, (tagCounts.get(normalizedTag) || 0) + 1);
+    }
+  }
+
+  const sortedCategories = [...categoryCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const sortedTags = [...tagCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  for (const [category, count] of sortedCategories) {
+    appendOption(elements.category, category, `${toDisplayLabel(category)} (${count})`);
     if (elements.quickCategory) {
-      const quickOption = document.createElement('option');
-      quickOption.value = category;
-      quickOption.textContent = category;
-      elements.quickCategory.append(quickOption);
+      appendOption(elements.quickCategory, category, `${toDisplayLabel(category)} (${count})`);
+    }
+  }
+
+  for (const [tag, count] of sortedTags) {
+    appendOption(elements.tag, tag, `${toDisplayLabel(tag)} (${count})`);
+    if (elements.quickTag) {
+      appendOption(elements.quickTag, tag, `${toDisplayLabel(tag)} (${count})`);
     }
   }
 }
@@ -70,6 +102,7 @@ function parseUrlState() {
   return {
     search: params.get('search') || '',
     category: params.get('category') || '',
+    tag: params.get('tag') || '',
     sort: params.get('sort') || 'title-asc',
     selectedPath: params.get('selectedPath') || null,
     favoritesOnly: params.get('favoritesOnly') === 'true',
@@ -80,10 +113,12 @@ function syncUrlState() {
   const params = new URLSearchParams();
   const searchValue = elements.search.value.trim();
   const categoryValue = elements.category.value;
+  const tagValue = elements.tag.value;
   const sortValue = elements.sort.value;
 
   if (searchValue) params.set('search', searchValue);
   if (categoryValue) params.set('category', categoryValue);
+  if (tagValue) params.set('tag', tagValue);
   if (sortValue && sortValue !== 'title-asc') params.set('sort', sortValue);
   if (state.selectedPath) params.set('selectedPath', state.selectedPath);
   if (state.showFavoritesOnly) params.set('favoritesOnly', 'true');
@@ -96,6 +131,7 @@ function syncUrlState() {
 function syncQuickControls() {
   if (elements.quickSearch) elements.quickSearch.value = elements.search.value;
   if (elements.quickCategory) elements.quickCategory.value = elements.category.value;
+  if (elements.quickTag) elements.quickTag.value = elements.tag.value;
   if (elements.quickFavoritesOnly) elements.quickFavoritesOnly.checked = state.showFavoritesOnly;
 }
 
@@ -103,6 +139,7 @@ function currentQuery() {
   return {
     q: elements.search.value.trim().toLowerCase(),
     category: elements.category.value,
+    tag: elements.tag.value,
     sort: elements.sort.value,
     favoritesOnly: state.showFavoritesOnly,
   };
@@ -124,23 +161,17 @@ function inferCategoryFromPath(path) {
   return segments[1];
 }
 
-function getEntryCategoryTokens(entry) {
-  const tokens = new Set();
-  const category = normalizeCategory(entry.category);
-  if (category) tokens.add(category);
-
-  for (const tag of normalizeTags(entry.tags)) {
-    const normalizedTag = normalizeCategory(tag);
-    if (normalizedTag) tokens.add(normalizedTag);
-  }
-
-  return tokens;
+function getNormalizedEntryTags(entry) {
+  return new Set(normalizeTags(entry.tags).map((tag) => normalizeCategory(tag)).filter(Boolean));
 }
 
-function matches(entry, q, category) {
+function matches(entry, q, category, tag) {
   const selectedCategory = normalizeCategory(category);
-  const categoryMatch = !selectedCategory || getEntryCategoryTokens(entry).has(selectedCategory);
+  const selectedTag = normalizeCategory(tag);
+  const categoryMatch = !selectedCategory || normalizeCategory(entry.category) === selectedCategory;
+  const tagMatch = !selectedTag || getNormalizedEntryTags(entry).has(selectedTag);
   if (!categoryMatch) return false;
+  if (!tagMatch) return false;
 
   if (!q) return true;
 
@@ -271,7 +302,7 @@ function makePromptButton(entry) {
 
   const meta = document.createElement('span');
   meta.className = 'prompt-meta';
-  meta.textContent = `${entry.category || 'Uncategorized'} • ${entry.path}`;
+  meta.textContent = `${toDisplayLabel(entry.category) || 'Uncategorized'} • ${entry.path}`;
 
   const preview = document.createElement('span');
   preview.className = 'prompt-preview';
@@ -384,8 +415,8 @@ function renderErrorState(errorMessage) {
 
 function renderList({ fromFilterChange = false } = {}) {
   const previousSelection = state.selectedPath;
-  const { q, category, sort, favoritesOnly } = currentQuery();
-  const matchesQuery = state.prompts.filter((entry) => matches(entry, q, category));
+  const { q, category, tag, sort, favoritesOnly } = currentQuery();
+  const matchesQuery = state.prompts.filter((entry) => matches(entry, q, category, tag));
   const matchesFavorites = favoritesOnly
     ? matchesQuery.filter((entry) => state.favorites.has(entry.path))
     : matchesQuery;
@@ -565,11 +596,11 @@ async function viewPrompt(entry, options = {}) {
 
     elements.viewerTitle.textContent = entry.title || parsed.attrs.title || entry.path;
     elements.viewerMeta.textContent = [
-      `Category: ${entry.category || 'Uncategorized'}`,
+      `Category: ${toDisplayLabel(entry.category) || 'Uncategorized'}`,
       `Path: ${entry.path}`,
       normalizedCreatedDate ? `Created: ${normalizedCreatedDate}` : null,
       normalizedUpdatedDate ? `Updated: ${normalizedUpdatedDate}` : null,
-      effectiveTags.length > 0 ? `Tags: ${effectiveTags.join(', ')}` : null,
+      effectiveTags.length > 0 ? `Tags: ${effectiveTags.map((tag) => toDisplayLabel(tag)).join(', ')}` : null,
     ]
       .filter(Boolean)
       .join(' | ');
@@ -603,6 +634,7 @@ function enhanceIndex(indexEntries) {
 function clearFilters() {
   elements.search.value = '';
   elements.category.value = '';
+  elements.tag.value = '';
   elements.sort.value = 'title-asc';
   elements.showFavoritesOnly.checked = false;
   state.showFavoritesOnly = false;
@@ -662,6 +694,12 @@ function applyInitialStateFromUrl(indexPaths) {
     elements.category.value = urlState.category;
   } else {
     elements.category.value = '';
+  }
+
+  if (urlState.tag && indexPaths.tags.has(urlState.tag)) {
+    elements.tag.value = urlState.tag;
+  } else {
+    elements.tag.value = '';
   }
 
   state.showFavoritesOnly = urlState.favoritesOnly;
@@ -738,6 +776,10 @@ function addEventListeners() {
     syncQuickControls();
     renderList({ fromFilterChange: true });
   });
+  elements.tag.addEventListener('change', () => {
+    syncQuickControls();
+    renderList({ fromFilterChange: true });
+  });
   elements.sort.addEventListener('change', () => renderList({ fromFilterChange: true }));
   elements.showFavoritesOnly.addEventListener('change', () => {
     state.showFavoritesOnly = elements.showFavoritesOnly.checked;
@@ -754,6 +796,12 @@ function addEventListeners() {
   if (elements.quickCategory) {
     elements.quickCategory.addEventListener('change', () => {
       elements.category.value = elements.quickCategory.value;
+      renderList({ fromFilterChange: true });
+    });
+  }
+  if (elements.quickTag) {
+    elements.quickTag.addEventListener('change', () => {
+      elements.tag.value = elements.quickTag.value;
       renderList({ fromFilterChange: true });
     });
   }
@@ -786,11 +834,12 @@ async function init() {
     state.prompts = enhanceIndex(indexEntries);
     loadFavorites();
 
-    fillCategoryFilter(state.prompts);
+    fillFacetFilters(state.prompts);
 
     applyInitialStateFromUrl({
       paths: new Set(state.prompts.map((prompt) => prompt.path)),
       categories: new Set(state.prompts.map((prompt) => prompt.category).filter(Boolean)),
+      tags: new Set(state.prompts.flatMap((prompt) => normalizeTags(prompt.tags)).map((tag) => normalizeCategory(tag))),
     });
 
     addEventListeners();

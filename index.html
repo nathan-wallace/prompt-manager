@@ -20,11 +20,26 @@
     >
 
     <header class="app-header border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
-      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">ASPA Prompt Explorer</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-          Browse, filter, and inspect reusable prompts.
-        </p>
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">ASPA Prompt Explorer</h1>
+          <p class="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
+            Browse, filter, and inspect reusable prompts.
+          </p>
+        </div>
+        <nav class="flex flex-wrap items-center gap-2 lg:justify-end" aria-label="Header menu">
+          <a
+            href="https://github.com/nathan-wallace-hhs/prompt-manager/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="action-btn action-btn--muted"
+            >Add prompt (GitHub issues)</a
+          >
+          <label class="toggle-chip" for="show-favorites-only">
+            <input id="show-favorites-only" name="show-favorites-only" type="checkbox" />
+            <span>Favorites only</span>
+          </label>
+        </nav>
       </div>
     </header>
 
@@ -119,11 +134,6 @@
               <option value="category-asc">Category (A–Z)</option>
               <option value="path-asc">Path (A–Z)</option>
             </select>
-          </label>
-
-          <label class="toggle-chip" for="show-favorites-only">
-            <input id="show-favorites-only" name="show-favorites-only" type="checkbox" />
-            <span>Favorites only</span>
           </label>
 
             <button id="clear-filters" class="action-btn action-btn--muted w-full" type="button">Clear filters</button>

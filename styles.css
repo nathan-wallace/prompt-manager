@@ -28,6 +28,10 @@
   --selected-bg: #eff6ff;
   --selected-border: #3b82f6;
   --active-ring: #94a3b8;
+  --focus-ring-color: #2563eb;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-halo: color-mix(in srgb, var(--focus-ring-color) 32%, transparent);
 
   --tag-bg: #e2e8f0;
   --tag-fg: #334155;
@@ -55,6 +59,8 @@
     --selected-bg: #082f49;
     --selected-border: #60a5fa;
     --active-ring: #64748b;
+    --focus-ring-color: #93c5fd;
+    --focus-ring-halo: color-mix(in srgb, var(--focus-ring-color) 45%, transparent);
 
     --tag-bg: #1e293b;
     --tag-fg: #cbd5e1;
@@ -130,6 +136,8 @@ body {
   background: var(--surface-1);
   font-size: var(--font-size-meta);
   font-weight: 600;
+  overflow: visible;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .toggle-chip input {
@@ -142,7 +150,20 @@ body {
   padding: 0.45rem 0.75rem;
   font-size: 0.78rem;
   font-weight: 600;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  overflow: visible;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.action-btn:focus-visible,
+.favorite-btn:focus-visible,
+.prompt-open-btn:focus-visible,
+.prompt-card-open-btn:focus-visible,
+[data-prompt-open='true']:focus-visible,
+.toggle-chip:focus-within {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-color: var(--focus-ring-color);
+  box-shadow: 0 0 0 calc(var(--focus-ring-width) + 2px) var(--focus-ring-halo);
 }
 
 .action-btn--muted {
@@ -206,6 +227,7 @@ body {
   text-align: left;
   transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease, border-color 120ms ease;
   cursor: pointer;
+  overflow: visible;
 }
 
 .prompt-card:hover {
@@ -287,6 +309,8 @@ body {
   font-size: 0.72rem;
   font-weight: 600;
   padding: 0.4rem 0.58rem;
+  overflow: visible;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .favorite-btn:hover {

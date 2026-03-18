@@ -156,6 +156,66 @@
     ]
   },
   {
+    "path": "prompts/ux-delivery/content-strategy-audit-analyst.md",
+    "category": "ux-delivery",
+    "title": "Content Strategy Audit and Remediation Plan",
+    "description": "Audit content quality and governance, then prioritize remediation actions with clear rewrite guidance.",
+    "tags": [
+      "ux-delivery",
+      "content-strategy",
+      "content-audit",
+      "governance"
+    ]
+  },
+  {
+    "path": "prompts/ux-delivery/discovery-brief-ba.md",
+    "category": "ux-delivery",
+    "title": "Discovery Brief for Business Analysis Intake",
+    "description": "Structure business analysis intake, problem framing, and decision-ready discovery outputs.",
+    "tags": [
+      "ux-delivery",
+      "business-analysis",
+      "discovery",
+      "requirements"
+    ]
+  },
+  {
+    "path": "prompts/ux-delivery/jira-breakdown-pm.md",
+    "category": "ux-delivery",
+    "title": "Jira Breakdown for Cross-Functional UX Delivery",
+    "description": "Convert discovery, design, content, and research outputs into Jira-ready epics, stories, and execution details.",
+    "tags": [
+      "ux-delivery",
+      "project-management",
+      "jira",
+      "agile-delivery"
+    ]
+  },
+  {
+    "path": "prompts/ux-delivery/usability-research-plan-and-readout.md",
+    "category": "ux-delivery",
+    "title": "Usability Research Plan and Readout Template",
+    "description": "Plan usability research and synthesize findings into prioritized actions mapped to backlog work.",
+    "tags": [
+      "ux-delivery",
+      "usability-testing",
+      "user-research",
+      "synthesis"
+    ]
+  },
+  {
+    "path": "prompts/ux-delivery/ux-solution-outline-designer.md",
+    "category": "ux-delivery",
+    "title": "UX Solution Outline for Design Direction",
+    "description": "Turn discovery findings into UX direction, accessibility expectations, and engineering/content handoff context.",
+    "tags": [
+      "ux-delivery",
+      "ux-design",
+      "interaction-design",
+      "accessibility"
+    ]
+  },
+  {
     "path": "prompts/work/email-rewrite-professional.md",
     "category": "work",
     "title": "Professional Email Rewrite (Digital UX/Content)",

@@ -158,6 +158,12 @@ body {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
   }
 
+  .viewer-panel {
+    position: sticky;
+    top: 108px;
+    align-self: start;
+  }
+
   .filters-panel {
     top: 108px;
     min-height: calc(100vh - 122px);
